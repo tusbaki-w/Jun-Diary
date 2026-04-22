@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>每日日記 · 心情記錄</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f0ede8;
+    --surface: #faf8f5;
+    --card: #ffffff;
+    --line-green: #06C755;
+    --line-dark: #00B900;
+    --accent: #3d7a5e;
+    --accent2: #c97c3a;
+    --text-primary: #1a1a1a;
+    --text-secondary: #6b6b6b;
+    --text-muted: #aaaaaa;
+    --border: #e8e4de;
+    --shadow: 0 2px 16px rgba(0,0,0,0.08);
+    --shadow-lg: 0 8px 40px rgba(0,0,0,0.12);
+    --radius: 16px;
+    --radius-sm: 10px;
+
+    /* Mood colors */
+    --mood-happy: #FFD93D;
+    --mood-calm: #6BCB77;
+    --mood-sad: #4D96FF;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Noto Sans TC', sans-serif;
+    background: var(--bg);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    width: 100%;
+    max-width: 480px;
+    background: var(--line-green);
+    padding: 48px 20px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(6,199,85,0.3);
+  }
+
+  .topbar-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .topbar h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    color: #fff;
+    letter-spacing: 0.02em;
+  }
+
+  .topbar-sub {
+    font-size: 11px;
+    color: rgba(255,255,255,0.8);
+    margin-top: 2px;
+    font-weight: 300;
+  }
+
+  .export-btn {
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.4);
+    color: #fff;
+    padding: 7px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-family: 'Noto Sans TC', sans-serif;
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+  }
+  .export-btn:hover { background: rgba(255,255,255,0.35); }
+
+  /* ── MAIN ── */
+  .main {
+    width: 100%;
+    max-width: 480px;
+    padding: 16px 14px 120px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* ── DATE HEADER ── */
+  .date-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 4px 4px;
+  }
+  .date-header .date-badge {
+    background: var(--accent);
+    color: #fff;
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+  }
+  .date-header .count-tag {
+    color: var(--text-muted);
+    font-size: 11px;
+  }
+
+  /* ── ENTRY CARD ── */
+  .entry-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    animation: slideIn 0.3s ease;
+    position: relative;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .entry-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .entry-time {
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .entry-time::before {
+    content: '';
+    width: 8px; height: 8px;
+    background: var(--line-green);
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .entry-delete {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 2px 6px;
+    border-radius: 6px;
+    transition: color 0.2s, background 0.2s;
+  }
+  .entry-delete:hover { color: #FF6B6B; background: #fff0f0; }
+
+  /* ── MOOD ROW ── */
+  .mood-row {
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px 8px;
+    flex-wrap: wrap;
+  }
+
+  .mood-chip {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-family: 'Noto Sans TC', sans-serif;
+    transition: all 0.18s ease;
+    user-select: none;
+    flex-shrink: 0;
+  }
+  .mood-chip:hover { border-color: #ccc; transform: scale(1.04); }
+  .mood-chip.active {
+    border-color: transparent;
+    color: #fff;
+    font-weight: 500;
+    transform: scale(1.06);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+  }
+
+  .mood-chip[data-mood="開心"].active { background: var(--mood-happy); color: #5a4000; }
+  .mood-chip[data-mood="平靜"].active { background: var(--mood-calm);  color: #1a4a22; }
+  .mood-chip[data-mood="難過"].active { background: var(--mood-sad);   color: #fff; }
+
+  .mood-chip[data-mood="開心"] .dot { background: var(--mood-happy); }
+  .mood-chip[data-mood="平靜"] .dot { background: var(--mood-calm); }
+  .mood-chip[data-mood="難過"] .dot { background: var(--mood-sad); }
+
+  .mood-chip.active .dot { background: rgba(255,255,255,0.6); }
+  .mood-chip[data-mood="開心"].active .dot,
+  .mood-chip[data-mood="平靜"].active .dot { background: rgba(0,0,0,0.2); }
+
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+  /* ── TEXT AREA ── */
+  .entry-body {
+    padding: 8px 16px 14px;
+  }
+
+  textarea.entry-text {
+    width: 100%;
+    min-height: 90px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 14px;
+    color: var(--text-primary);
+    line-height: 1.7;
+    resize: none;
+    background: var(--surface);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    overflow: hidden;
+  }
+  textarea.entry-text:focus {
+    border-color: var(--line-green);
+    box-shadow: 0 0 0 3px rgba(6,199,85,0.1);
+  }
+  textarea.entry-text::placeholder { color: var(--text-muted); }
+
+  /* Mood indicator strip */
+  .mood-strip {
+    height: 4px;
+    border-radius: 0 0 var(--radius) var(--radius);
+    background: var(--border);
+    transition: background 0.3s;
+  }
+
+  /* ── ADD BUTTON ── */
+  .fab-wrap {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .fab {
+    background: var(--line-green);
+    color: #fff;
+    border: none;
+    border-radius: 28px;
+    padding: 14px 28px;
+    font-size: 15px;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 6px 24px rgba(6,199,85,0.45);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: transform 0.15s, box-shadow 0.15s;
+    letter-spacing: 0.05em;
+  }
+  .fab:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(6,199,85,0.5); }
+  .fab:active { transform: scale(0.96); }
+  .fab .plus { font-size: 20px; line-height: 1; }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px 40px;
+    color: var(--text-muted);
+    animation: fadeIn 0.5s ease;
+  }
+  @keyframes fadeIn { from {opacity:0} to {opacity:1} }
+  .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; line-height: 1.8; }
+
+  /* ── EXPORT MODAL ── */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 999;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+
+  .modal {
+    background: var(--card);
+    border-radius: 20px 20px 0 0;
+    width: 100%;
+    max-width: 480px;
+    padding: 24px 20px 36px;
+    animation: slideUp 0.3s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+  .modal h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+  }
+  .modal p { font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.6; }
+
+  .modal-btns { display: flex; flex-direction: column; gap: 10px; }
+
+  .modal-btn {
+    padding: 14px 20px;
+    border-radius: 12px;
+    border: none;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: opacity 0.2s;
+  }
+  .modal-btn:hover { opacity: 0.85; }
+  .modal-btn.primary { background: var(--line-green); color: #fff; }
+  .modal-btn.secondary { background: var(--surface); color: var(--text-primary); border: 1.5px solid var(--border); }
+  .modal-btn.cancel { background: none; color: var(--text-muted); justify-content: center; }
+
+  /* Stats */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 12px;
+    text-align: center;
+    border: 1px solid var(--border);
+  }
+  .stat-num { font-size: 22px; font-weight: 700; color: var(--accent); font-family: 'DM Serif Display', serif; }
+  .stat-label { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    top: 90px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: #222;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 13px;
+    z-index: 9999;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-inner">
+    <div>
+      <h1>每日日記 📔</h1>
+      <div class="topbar-sub" id="todayLabel">載入中...</div>
+    </div>
+    <button class="export-btn" onclick="openExport()">匯出 ↗</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main" id="main">
+  <div class="empty-state" id="emptyState">
+    <div class="icon">✍️</div>
+    <p>今天還沒有記錄<br>按下方按鈕新增第一篇日記吧！</p>
+  </div>
+</div>
+
+<!-- FAB -->
+<div class="fab-wrap">
+  <button class="fab" onclick="addEntry()">
+    <span class="plus">＋</span> 新增記錄
+  </button>
+</div>
+
+<!-- EXPORT MODAL -->
+<div class="modal-overlay" id="exportModal" onclick="closeExportIfBg(event)">
+  <div class="modal">
+    <h2>匯出日記資料</h2>
+    <p>將你的日記匯出以便未來進行自我分析與回顧</p>
+
+    <div class="stats-row" id="statsRow"></div>
+
+    <div class="modal-btns">
+      <button class="modal-btn primary" onclick="exportJSON()">
+        📄 匯出 JSON（完整資料）
+      </button>
+      <button class="modal-btn secondary" onclick="exportCSV()">
+        📊 匯出 CSV（可用 Excel 開啟）
+      </button>
+      <button class="modal-btn secondary" onclick="exportTXT()">
+        📝 匯出純文字
+      </button>
+      <button class="modal-btn cancel" onclick="closeExport()">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────
+const STORAGE_KEY = 'daily_journal_v2';
+const MOODS = [
+  { label: '開心', emoji: '😊' },
+  { label: '平靜', emoji: '😌' },
+  { label: '難過', emoji: '😢' },
+];
+
+const MOOD_COLORS = {
+  '開心': '#FFD93D', '平靜': '#6BCB77', '難過': '#4D96FF'
+};
+
+let entries = [];
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    entries = raw ? JSON.parse(raw) : [];
+  } catch { entries = []; }
+}
+
+function saveData() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+}
+
+// ── UTILS ─────────────────────────────────────────────
+function nowISO() { return new Date().toISOString(); }
+
+function formatDate(iso) {
+  const d = new Date(iso);
+  const days = ['日','一','二','三','四','五','六'];
+  return `${d.getFullYear()} 年 ${d.getMonth()+1} 月 ${d.getDate()} 日（週${days[d.getDay()]}）`;
+}
+
+function formatTime(iso) {
+  const d = new Date(iso);
+  const h = String(d.getHours()).padStart(2,'0');
+  const m = String(d.getMinutes()).padStart(2,'0');
+  return `${h}:${m}`;
+}
+
+function getTodayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function getDateStr(iso) {
+  return iso.slice(0, 10);
+}
+
+// ── ENTRY ─────────────────────────────────────────────
+function addEntry() {
+  const id = Date.now().toString();
+  const entry = { id, createdAt: nowISO(), text: '', moods: [] };
+  entries.unshift(entry);
+  saveData();
+  renderAll();
+  // Focus textarea
+  setTimeout(() => {
+    const ta = document.querySelector(`[data-id="${id}"] textarea`);
+    if (ta) ta.focus();
+  }, 80);
+}
+
+function deleteEntry(id) {
+  entries = entries.filter(e => e.id !== id);
+  saveData();
+  renderAll();
+}
+
+function updateText(id, text) {
+  const e = entries.find(e => e.id === id);
+  if (e) { e.text = text; saveData(); }
+}
+
+function toggleMood(id, mood) {
+  const e = entries.find(e => e.id === id);
+  if (!e) return;
+  const idx = e.moods.indexOf(mood);
+  if (idx >= 0) {
+    e.moods.splice(idx, 1);
+  } else {
+    if (e.moods.length >= 3) { showToast('最多選 3 種心情'); return; }
+    e.moods.push(mood);
+  }
+  saveData();
+  // Update chips & strip
+  const card = document.querySelector(`[data-id="${id}"]`);
+  if (!card) return;
+  card.querySelectorAll('.mood-chip').forEach(chip => {
+    const m = chip.dataset.mood;
+    chip.classList.toggle('active', e.moods.includes(m));
+  });
+  updateStrip(card, e.moods);
+}
+
+function updateStrip(card, moods) {
+  const strip = card.querySelector('.mood-strip');
+  if (!strip) return;
+  if (moods.length === 0) {
+    strip.style.background = 'var(--border)';
+  } else {
+    const colors = moods.map(m => MOOD_COLORS[m] || '#ccc');
+    strip.style.background = `linear-gradient(to right, ${colors.join(', ')})`;
+  }
+}
+
+// ── RENDER ────────────────────────────────────────────
+function renderAll() {
+  const main = document.getElementById('main');
+  const empty = document.getElementById('emptyState');
+
+  // Group by date
+  const groups = {};
+  entries.forEach(e => {
+    const d = getDateStr(e.createdAt);
+    if (!groups[d]) groups[d] = [];
+    groups[d].push(e);
+  });
+
+  const dates = Object.keys(groups).sort((a,b) => b.localeCompare(a));
+
+  main.innerHTML = '';
+
+  if (dates.length === 0) {
+    main.appendChild(createEmptyState());
+    return;
+  }
+
+  dates.forEach(date => {
+    const header = document.createElement('div');
+    header.className = 'date-header';
+    const iso = date + 'T00:00:00';
+    header.innerHTML = `
+      <span class="date-badge">${formatDate(iso)}</span>
+      <span class="count-tag">${groups[date].length} 篇</span>
+    `;
+    main.appendChild(header);
+
+    groups[date].forEach(e => {
+      main.appendChild(createCard(e));
+    });
+  });
+}
+
+function createEmptyState() {
+  const div = document.createElement('div');
+  div.className = 'empty-state';
+  div.innerHTML = `<div class="icon">✍️</div><p>今天還沒有記錄<br>按下方按鈕新增第一篇日記吧！</p>`;
+  return div;
+}
+
+function createCard(entry) {
+  const div = document.createElement('div');
+  div.className = 'entry-card';
+  div.dataset.id = entry.id;
+
+  const moodChipsHtml = MOODS.map(m => `
+    <button class="mood-chip ${entry.moods.includes(m.label) ? 'active' : ''}"
+      data-mood="${m.label}"
+      onclick="toggleMood('${entry.id}', '${m.label}')">
+      <span class="dot"></span>${m.emoji} ${m.label}
+    </button>
+  `).join('');
+
+  const colors = entry.moods.map(m => MOOD_COLORS[m] || '#ccc');
+  const stripBg = colors.length ? `linear-gradient(to right, ${colors.join(', ')})` : 'var(--border)';
+
+  div.innerHTML = `
+    <div class="entry-header">
+      <span class="entry-time">${formatTime(entry.createdAt)}</span>
+      <button class="entry-delete" title="刪除" onclick="deleteEntry('${entry.id}')">✕</button>
+    </div>
+    <div class="mood-row">${moodChipsHtml}</div>
+    <div class="entry-body">
+      <textarea class="entry-text" placeholder="今天發生了什麼？寫下你的感受..."
+        oninput="updateText('${entry.id}', this.value); autoResize(this)"
+      >${entry.text}</textarea>
+    </div>
+    <div class="mood-strip" style="background: ${stripBg}"></div>
+  `;
+
+  // Auto-resize on mount
+  setTimeout(() => {
+    const ta = div.querySelector('textarea');
+    if (ta) autoResize(ta);
+  }, 0);
+
+  return div;
+}
+
+function autoResize(ta) {
+  ta.style.height = 'auto';
+  ta.style.height = Math.max(90, ta.scrollHeight) + 'px';
+}
+
+// ── EXPORT ────────────────────────────────────────────
+function openExport() {
+  renderStats();
+  document.getElementById('exportModal').classList.add('show');
+}
+function closeExport() {
+  document.getElementById('exportModal').classList.remove('show');
+}
+function closeExportIfBg(e) {
+  if (e.target === e.currentTarget) closeExport();
+}
+
+function renderStats() {
+  const allMoods = entries.flatMap(e => e.moods);
+  const moodCount = {};
+  allMoods.forEach(m => { moodCount[m] = (moodCount[m]||0)+1; });
+  const topMoods = Object.entries(moodCount).sort((a,b)=>b[1]-a[1]).slice(0,1);
+
+  const days = new Set(entries.map(e => getDateStr(e.createdAt))).size;
+  const todayEntries = entries.filter(e => getDateStr(e.createdAt) === getTodayStr()).length;
+
+  document.getElementById('statsRow').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-num">${entries.length}</div>
+      <div class="stat-label">總記錄數</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">${days}</div>
+      <div class="stat-label">記錄天數</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">${topMoods.length ? MOODS.find(m=>m.label===topMoods[0][0])?.emoji||'—' : '—'}</div>
+      <div class="stat-label">最常見心情</div>
+    </div>
+  `;
+}
+
+function exportJSON() {
+  const data = {
+    exportedAt: new Date().toISOString(),
+    totalEntries: entries.length,
+    entries: entries.map(e => ({
+      id: e.id,
+      createdAt: e.createdAt,
+      date: getDateStr(e.createdAt),
+      time: formatTime(e.createdAt),
+      moods: e.moods,
+      text: e.text,
+      wordCount: e.text.length,
+    }))
+  };
+  download('日記資料.json', JSON.stringify(data, null, 2), 'application/json');
+  showToast('✅ JSON 已匯出！');
+  closeExport();
+}
+
+function exportCSV() {
+  const headers = ['編號','日期','時間','心情1','心情2','心情3','內容','字數'];
+  const rows = entries.map((e, i) => [
+    i+1,
+    getDateStr(e.createdAt),
+    formatTime(e.createdAt),
+    e.moods[0]||'',
+    e.moods[1]||'',
+    e.moods[2]||'',
+    `"${e.text.replace(/"/g,'""')}"`,
+    e.text.length,
+  ]);
+  const csv = '\uFEFF' + [headers, ...rows].map(r => r.join(',')).join('\n');
+  download('日記資料.csv', csv, 'text/csv;charset=utf-8');
+  showToast('✅ CSV 已匯出！');
+  closeExport();
+}
+
+function exportTXT() {
+  const lines = [];
+  const groups = {};
+  entries.forEach(e => {
+    const d = getDateStr(e.createdAt);
+    if (!groups[d]) groups[d] = [];
+    groups[d].push(e);
+  });
+  Object.keys(groups).sort((a,b)=>b.localeCompare(a)).forEach(date => {
+    lines.push(`═══════════════════════════════`);
+    lines.push(`📅 ${formatDate(date+'T00:00:00')}`);
+    lines.push(`═══════════════════════════════`);
+    groups[date].forEach((e, i) => {
+      lines.push(`\n【第 ${i+1} 篇】${formatTime(e.createdAt)}`);
+      if (e.moods.length) {
+        const mEmoji = e.moods.map(m => MOODS.find(x=>x.label===m)?.emoji+m).join('  ');
+        lines.push(`心情：${mEmoji}`);
+      }
+      lines.push(e.text || '（無內容）');
+    });
+    lines.push('');
+  });
+  download('日記內容.txt', lines.join('\n'), 'text/plain;charset=utf-8');
+  showToast('✅ 純文字已匯出！');
+  closeExport();
+}
+
+function download(filename, content, type) {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── TOAST ─────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── INIT ──────────────────────────────────────────────
+function init() {
+  loadData();
+  const now = new Date();
+  const days = ['日','一','二','三','四','五','六'];
+  document.getElementById('todayLabel').textContent =
+    `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()} 週${days[now.getDay()]}`;
+  renderAll();
+}
+
+init();
+</script>
+</body>
+</html>
